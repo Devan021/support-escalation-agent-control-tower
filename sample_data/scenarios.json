@@ -1,0 +1,227 @@
+[
+  {
+    "scenario_id": "scn_security_privacy_breach",
+    "title": "Security privacy breach review",
+    "domain": "security",
+    "persona": "Enterprise security operations lead",
+    "ticket": {
+      "external_id": "scenario-security-privacy-breach",
+      "subject": "Potential customer data exposure requires privacy review",
+      "body": "We found a possible production data breach involving exported audit records. Privacy and compliance need confirmation before we respond to executives.",
+      "customer": "HelioGrid Energy",
+      "customer_email": "secops@heliogrid.example",
+      "priority": "urgent",
+      "customer_tier": "enterprise",
+      "tags": ["security", "privacy", "compliance", "breach"]
+    },
+    "expected": {
+      "classification_category": "security_privacy",
+      "sla_level": "high",
+      "should_escalate": true,
+      "approval_pause": true,
+      "low_confidence_review": false,
+      "failure_state": false,
+      "tool_retry": false
+    }
+  },
+  {
+    "scenario_id": "scn_billing_duplicate_invoice",
+    "title": "Duplicate enterprise invoice line",
+    "domain": "billing",
+    "persona": "Finance controller",
+    "ticket": {
+      "external_id": "scenario-billing-duplicate-invoice",
+      "subject": "Duplicate seat charge on renewal invoice",
+      "body": "Invoice INV-8842 includes a duplicate seat charge after our renewal. Please explain the billing dispute path and whether a refund or credit is available.",
+      "customer": "Cobalt Retail",
+      "customer_email": "finance@cobalt.example",
+      "priority": "normal",
+      "customer_tier": "enterprise",
+      "tags": ["billing", "invoice", "refund"]
+    },
+    "expected": {
+      "classification_category": "billing",
+      "sla_level": "low",
+      "should_escalate": false,
+      "approval_pause": true,
+      "low_confidence_review": false,
+      "failure_state": false,
+      "tool_retry": false
+    }
+  },
+  {
+    "scenario_id": "scn_privacy_data_export",
+    "title": "Deleted-record data export question",
+    "domain": "data_export_privacy",
+    "persona": "Privacy program manager",
+    "ticket": {
+      "external_id": "scenario-privacy-data-export",
+      "subject": "Data export request includes deleted records question",
+      "body": "A regulated customer asked whether their data export includes deleted records. Please verify deletion, export, privacy, and compliance handling before we answer.",
+      "customer": "Evergreen Bank",
+      "customer_email": "privacy@evergreen.example",
+      "priority": "normal",
+      "customer_tier": "standard",
+      "tags": ["privacy", "data", "export", "compliance"]
+    },
+    "expected": {
+      "classification_category": "security_privacy",
+      "sla_level": "low",
+      "should_escalate": false,
+      "approval_pause": true,
+      "low_confidence_review": false,
+      "failure_state": false,
+      "tool_retry": false
+    }
+  },
+  {
+    "scenario_id": "scn_enterprise_login_outage",
+    "title": "Production login outage",
+    "domain": "outage",
+    "persona": "Clinical operations commander",
+    "ticket": {
+      "external_id": "scenario-enterprise-login-outage",
+      "subject": "Production login loop for all care coordinators",
+      "body": "All care coordinators cannot login. Production outreach is blocked, this is an outage, and the SLA breach clock is active.",
+      "customer": "Northstar Health",
+      "customer_email": "ops@northstar.example",
+      "priority": "urgent",
+      "customer_tier": "enterprise",
+      "tags": ["login", "incident", "outage", "sla"]
+    },
+    "expected": {
+      "classification_category": "incident",
+      "sla_level": "high",
+      "should_escalate": true,
+      "approval_pause": true,
+      "low_confidence_review": false,
+      "failure_state": false,
+      "tool_retry": false
+    }
+  },
+  {
+    "scenario_id": "scn_webhook_api_regression",
+    "title": "Webhook API regression",
+    "domain": "webhook_api",
+    "persona": "Developer platform lead",
+    "ticket": {
+      "external_id": "scenario-webhook-api-regression",
+      "subject": "Webhook 500 regression after release",
+      "body": "Webhook deliveries return 500 errors after yesterday's production deploy. We have request IDs, timestamps, retry delays, and SLA concern from the customer.",
+      "customer": "Atlas Logistics",
+      "customer_email": "dev@atlas.example",
+      "priority": "high",
+      "customer_tier": "enterprise",
+      "tags": ["webhook", "api", "regression"]
+    },
+    "expected": {
+      "classification_category": "bug",
+      "sla_level": "medium",
+      "should_escalate": true,
+      "approval_pause": true,
+      "low_confidence_review": false,
+      "failure_state": false,
+      "tool_retry": false
+    }
+  },
+  {
+    "scenario_id": "scn_enterprise_onboarding_sso",
+    "title": "Enterprise onboarding SSO setup",
+    "domain": "enterprise_onboarding",
+    "persona": "Implementation manager",
+    "ticket": {
+      "external_id": "scenario-enterprise-onboarding-sso",
+      "subject": "Enterprise onboarding SAML SSO domain mapping",
+      "body": "We are preparing go-live and need SAML SSO, OAuth callback, SCIM domain mapping, and auth configuration reviewed before onboarding users.",
+      "customer": "Meridian Robotics",
+      "customer_email": "implementation@meridian.example",
+      "priority": "normal",
+      "customer_tier": "enterprise",
+      "tags": ["sso", "saml", "auth", "onboarding"]
+    },
+    "expected": {
+      "classification_category": "authentication",
+      "sla_level": "low",
+      "should_escalate": true,
+      "approval_pause": true,
+      "low_confidence_review": false,
+      "failure_state": false,
+      "tool_retry": false
+    }
+  },
+  {
+    "scenario_id": "scn_renewal_risk_billing_credit",
+    "title": "Renewal risk billing credit",
+    "domain": "renewal_risk",
+    "persona": "Customer success director",
+    "ticket": {
+      "external_id": "scenario-renewal-risk-billing-credit",
+      "subject": "Renewal risk: invoice credit dispute before QBR",
+      "body": "The account is threatening renewal churn because billing shows duplicate seats. They are asking about refund options, invoice correction, contract terms, and SLA credits.",
+      "customer": "SummitCloud Legal",
+      "customer_email": "csm@summitcloud.example",
+      "priority": "high",
+      "customer_tier": "enterprise",
+      "tags": ["billing", "invoice", "renewal", "refund", "sla"]
+    },
+    "expected": {
+      "classification_category": "billing",
+      "sla_level": "medium",
+      "should_escalate": false,
+      "approval_pause": true,
+      "low_confidence_review": false,
+      "failure_state": false,
+      "tool_retry": false
+    }
+  },
+  {
+    "scenario_id": "scn_low_confidence_ambiguity",
+    "title": "Low-confidence ambiguous request",
+    "domain": "low_confidence_ambiguity",
+    "persona": "Unclear end user",
+    "ticket": {
+      "external_id": "scenario-low-confidence-ambiguity",
+      "subject": "Need help ???",
+      "body": "Something looks odd.",
+      "customer": "Greyline Media",
+      "customer_email": "ops@greyline.example",
+      "priority": "low",
+      "customer_tier": "standard",
+      "tags": []
+    },
+    "expected": {
+      "classification_category": "general_support",
+      "sla_level": "low",
+      "should_escalate": false,
+      "approval_pause": true,
+      "low_confidence_review": true,
+      "failure_state": false,
+      "tool_retry": false
+    }
+  },
+  {
+    "scenario_id": "scn_webhook_kb_failure",
+    "title": "Webhook escalation with KB failure",
+    "domain": "webhook_api",
+    "persona": "Enterprise integration owner",
+    "ticket": {
+      "external_id": "scenario-webhook-kb-failure",
+      "subject": "Webhook API outage with local KB retrieval failure drill",
+      "body": "Webhook deliveries are returning 5xx in production for enterprise integrations. The customer is blocked, SLA breach risk is high, and support needs an escalation.",
+      "customer": "Pinnacle Freight",
+      "customer_email": "platform@pinnacle.example",
+      "priority": "high",
+      "customer_tier": "enterprise",
+      "tags": ["webhook", "api", "regression", "force-kb-failure"]
+    },
+    "expected": {
+      "classification_category": "bug",
+      "sla_level": "high",
+      "should_escalate": true,
+      "approval_pause": true,
+      "low_confidence_review": true,
+      "failure_state": true,
+      "tool_retry": true
+    }
+  }
+]

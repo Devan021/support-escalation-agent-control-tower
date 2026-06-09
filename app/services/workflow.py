@@ -20,6 +20,7 @@ from app.models import (
     AuditEvent,
     Classification,
     KnowledgeArticle,
+    OutboxActionType,
     QaResult,
     RunRecord,
     RunStatus,
@@ -27,17 +28,21 @@ from app.models import (
     Ticket,
     TicketPriority,
     TicketStatus,
+    TraceEvent,
 )
 from app.services.approvals import ApprovalService
 from app.services.audit import AuditService
 from app.services.knowledge import KnowledgeRetrievalService
 from app.services.metrics import MetricsService
+from app.services.outbox import OutboxService
+from app.services.playbooks import PlaybookService
 from app.services.tickets import TicketService
 from app.services.trace import TraceService
 
 REQUIRED_WORKFLOW_NODES = [
     "intake_classifier",
     "sla_risk_scorer",
+    "playbook_recommender",
     "knowledge_retriever",
     "customer_reply_drafter",
     "engineering_escalation_drafter",
@@ -57,6 +62,8 @@ class AgentWorkflowService:
         trace_service: TraceService,
         metrics_service: MetricsService,
         audit_service: AuditService,
+        outbox_service: OutboxService,
+        playbook_service: PlaybookService,
         low_confidence_threshold: float,
         sla_high_risk_threshold: float,
     ):
@@ -67,6 +74,8 @@ class AgentWorkflowService:
         self.trace_service = trace_service
         self.metrics_service = metrics_service
         self.audit_service = audit_service
+        self.outbox_service = outbox_service
+        self.playbook_service = playbook_service
         self.low_confidence_threshold = low_confidence_threshold
         self.sla_high_risk_threshold = sla_high_risk_threshold
         self.llm = LocalMockLlmProvider()
@@ -142,7 +151,14 @@ class AgentWorkflowService:
         completed_at = None if status == RunStatus.pending_approval else datetime.now(timezone.utc).isoformat()
 
         def mutate(state):
-            raw = state["runs"][workflow_state["run_id"]]
+            raw = state["runs"].get(
+                workflow_state["run_id"],
+                RunRecord(
+                    run_id=workflow_state["run_id"],
+                    ticket_id=workflow_state["ticket_id"],
+                    trace_id=workflow_state["trace_id"],
+                ).model_dump(mode="json"),
+            )
             raw.update({"status": status, "state": workflow_state, "final_action": final_action, "failure_state": workflow_state.get("failure_state"), "completed_at": completed_at})
             state["runs"][workflow_state["run_id"]] = raw
             return RunRecord(**raw)
@@ -224,6 +240,17 @@ class AgentWorkflowService:
 
         return await self._node(state, "knowledge_retriever", work)
 
+    async def playbook_recommender(self, state: AgentWorkflowState) -> AgentWorkflowState:
+        async def work():
+            ticket = Ticket(**state["ticket"])
+            recommendations = self.playbook_service.recommend_for_ticket(ticket, state, top_n=3)
+            state["playbook_recommendations"] = [
+                recommendation.model_dump(mode="json") for recommendation in recommendations
+            ]
+            return state
+
+        return await self._node(state, "playbook_recommender", work)
+
     async def customer_reply_drafter(self, state: AgentWorkflowState) -> AgentWorkflowState:
         async def work():
             ticket = Ticket(**state["ticket"])
@@ -288,11 +315,98 @@ class AgentWorkflowService:
                 return state
             actions = []
             if drafts.get("customer_reply"):
-                await self.zendesk.update_ticket(ticket.ticket_id, "pending_customer_update_sent", drafts["customer_reply"])
+                zendesk_payload = {
+                    "ticket_id": ticket.ticket_id,
+                    "status": "pending_customer_update_sent",
+                    "comment": drafts["customer_reply"],
+                }
+                await self.outbox_service.record_dispatch(
+                    trace_id=state["trace_id"],
+                    run_id=state["run_id"],
+                    ticket_id=ticket.ticket_id,
+                    action_type=OutboxActionType.customer_reply,
+                    destination=f"zendesk.ticket.{ticket.ticket_id}.comment",
+                    payload=zendesk_payload,
+                )
+                zendesk_result = await self.zendesk.update_ticket(
+                    ticket.ticket_id,
+                    "pending_customer_update_sent",
+                    drafts["customer_reply"],
+                )
+                await self.outbox_service.record_dispatch(
+                    trace_id=state["trace_id"],
+                    run_id=state["run_id"],
+                    ticket_id=ticket.ticket_id,
+                    action_type=OutboxActionType.zendesk_update,
+                    destination=f"zendesk.ticket.{ticket.ticket_id}",
+                    payload=zendesk_result,
+                )
+                await self.trace_service.add_event(
+                    TraceEvent(
+                        run_id=state["run_id"],
+                        trace_id=state["trace_id"],
+                        ticket_id=ticket.ticket_id,
+                        event_type="outbox_dispatch",
+                        node="finalizer",
+                        message="Recorded customer reply and Zendesk update in outbox",
+                        metadata={"action_types": ["customer_reply", "zendesk_update"]},
+                    )
+                )
                 actions.append("customer_reply_sent")
             if drafts.get("engineering_escalation"):
-                issue = await self.jira.create_issue(f"SLA risk escalation: {ticket.subject}", drafts["engineering_escalation"], ["support-escalation", state["classification"]["category"]])
-                await self.slack.post_message("#support-escalations", f"{issue['issue_key']} created for {ticket.ticket_id}")
+                jira_payload = {
+                    "title": f"SLA risk escalation: {ticket.subject}",
+                    "body": drafts["engineering_escalation"],
+                    "labels": ["support-escalation", state["classification"]["category"]],
+                }
+                await self.outbox_service.record_dispatch(
+                    trace_id=state["trace_id"],
+                    run_id=state["run_id"],
+                    ticket_id=ticket.ticket_id,
+                    action_type=OutboxActionType.engineering_escalation,
+                    destination="jira.project.ESC.escalation",
+                    payload=jira_payload,
+                )
+                issue = await self.jira.create_issue(
+                    jira_payload["title"],
+                    jira_payload["body"],
+                    jira_payload["labels"],
+                )
+                await self.outbox_service.record_dispatch(
+                    trace_id=state["trace_id"],
+                    run_id=state["run_id"],
+                    ticket_id=ticket.ticket_id,
+                    action_type=OutboxActionType.jira_issue,
+                    destination=f"jira.issue.{issue['issue_key']}",
+                    payload=issue,
+                )
+                slack_payload = {
+                    "channel": "#support-escalations",
+                    "text": f"{issue['issue_key']} created for {ticket.ticket_id}",
+                }
+                slack_result = await self.slack.post_message(
+                    slack_payload["channel"],
+                    slack_payload["text"],
+                )
+                await self.outbox_service.record_dispatch(
+                    trace_id=state["trace_id"],
+                    run_id=state["run_id"],
+                    ticket_id=ticket.ticket_id,
+                    action_type=OutboxActionType.slack_alert,
+                    destination="slack.channel.#support-escalations",
+                    payload=slack_result,
+                )
+                await self.trace_service.add_event(
+                    TraceEvent(
+                        run_id=state["run_id"],
+                        trace_id=state["trace_id"],
+                        ticket_id=ticket.ticket_id,
+                        event_type="outbox_dispatch",
+                        node="finalizer",
+                        message="Recorded Jira escalation and Slack alert in outbox",
+                        metadata={"action_types": ["engineering_escalation", "jira_issue", "slack_alert"]},
+                    )
+                )
                 actions.append("engineering_ticket_created")
             state["final_action"] = "+".join(actions) or "approved_no_external_action"
             return state

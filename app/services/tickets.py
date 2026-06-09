@@ -23,6 +23,13 @@ class TicketService:
         raw = state["tickets"].get(ticket_id)
         return Ticket(**raw) if raw else None
 
+    async def get_by_external_id(self, external_id: str) -> Ticket | None:
+        state = await self.store.load()
+        for raw in state["tickets"].values():
+            if raw.get("external_id") == external_id:
+                return Ticket(**raw)
+        return None
+
     async def list(self) -> list[Ticket]:
         state = await self.store.load()
         if not state["tickets"]:
@@ -51,4 +58,3 @@ class TicketService:
                 state["tickets"][ticket.ticket_id] = ticket.model_dump(mode="json")
 
         await self.store.update(mutate)
-

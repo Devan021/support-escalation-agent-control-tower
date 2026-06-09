@@ -11,6 +11,8 @@ EMPTY_STATE: dict[str, Any] = {
     "runs": {},
     "traces": {},
     "approvals": {},
+    "outbox": {},
+    "drills": {},
     "audit_events": {},
     "metrics": {"node_metrics": {}, "cost_usd": 0.0},
 }

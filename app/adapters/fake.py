@@ -65,9 +65,10 @@ class FakeKnowledgeBaseAdapter:
     async def search(self, query: str, tags: list[str], limit: int = 3) -> list[KnowledgeArticle]:
         await asyncio.sleep(0)
         text = query.lower()
-        if "force-kb-failure" in text:
+        fixture_markers = f"{text} {' '.join(tags).lower()}"
+        if "force-kb-failure" in fixture_markers:
             raise AdapterError("Forced internal KB outage for retry testing")
-        if "transient-kb-failure" in text and self._seen.get(query, 0) < 1:
+        if "transient-kb-failure" in fixture_markers and self._seen.get(query, 0) < 1:
             self._seen[query] = self._seen.get(query, 0) + 1
             raise AdapterError("Transient internal KB timeout")
         rows = json.loads(self.fixture_path.read_text(encoding="utf-8"))
@@ -82,4 +83,3 @@ class FakeKnowledgeBaseAdapter:
             if score:
                 articles.append(KnowledgeArticle(**row, score=float(score)))
         return sorted(articles or [KnowledgeArticle(**row, score=0.2) for row in rows[:limit]], key=lambda x: x.score, reverse=True)[:limit]
-

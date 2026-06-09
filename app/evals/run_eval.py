@@ -51,7 +51,14 @@ async def run_eval() -> None:
     node_metrics = metrics.get("node_metrics", {})
     token_usage = sum(item.get("tokens", 0) for item in node_metrics.values())
     estimated_cost = metrics.get("estimated_cost_usd", 0.0)
-    passed = correct_classification == total and correct_routing == total and approval_pauses >= total
+    scenario_pack = await container.scenarios.export_eval_pack()
+    scenario_summary = scenario_pack["eval_summary"]
+    passed = (
+        correct_classification == total
+        and correct_routing == total
+        and approval_pauses >= total
+        and scenario_summary["status"] == "pass"
+    )
 
     print(f"Number of eval tickets: {total}")
     print(f"Classification accuracy: {correct_classification}/{total}")
@@ -61,6 +68,18 @@ async def run_eval() -> None:
     print(f"Average workflow latency: {round(elapsed_ms / total, 2)} ms")
     print(f"Token usage: {token_usage}")
     print(f"Estimated cost: ${estimated_cost:.6f}")
+    print(f"Scenario Dataset scenarios: {scenario_summary['scenario_count']}")
+    print(
+        "Scenario Dataset classification accuracy: "
+        f"{scenario_summary['classification_accuracy']['correct']}/"
+        f"{scenario_summary['classification_accuracy']['total']}"
+    )
+    print(
+        "Scenario Dataset SLA routing: "
+        f"{scenario_summary['sla_routing']['correct']}/"
+        f"{scenario_summary['sla_routing']['total']}"
+    )
+    print(f"Scenario Dataset Eval Pack: {scenario_pack['markdown_path']}")
     print(f"Pass/fail summary: {'PASS' if passed else 'FAIL'}")
     if not passed:
         raise SystemExit(1)

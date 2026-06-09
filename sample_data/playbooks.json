@@ -1,0 +1,87 @@
+[
+  {
+    "id": "pb_sso_outage",
+    "title": "SSO Outage Response",
+    "category": "authentication",
+    "tags": ["sso", "saml", "oauth", "login", "outage", "incident"],
+    "severity": "critical",
+    "checklist": [
+      "Confirm affected identity provider, tenant, and user scope.",
+      "Validate current SAML/OAuth configuration and recent auth changes.",
+      "Open incident channel with support lead, identity owner, and on-call engineer.",
+      "Publish first customer update with impact, workaround status, and next update time.",
+      "Track mitigation, recovery validation, and post-incident follow-up."
+    ],
+    "owner_roles": ["Support Lead", "Identity Engineer", "Incident Commander"],
+    "escalation_policy": "Page identity on-call immediately for enterprise-wide login outage; update the customer every 30 minutes until mitigated.",
+    "customer_update_template": "We are treating this as a high-priority SSO incident affecting {ticket_id}. Our identity engineering team is validating the SAML/OAuth path now. Next update: within 30 minutes."
+  },
+  {
+    "id": "pb_webhook_regression",
+    "title": "Webhook Regression Triage",
+    "category": "api_integrations",
+    "tags": ["webhook", "regression", "5xx", "retry", "integration", "api"],
+    "severity": "high",
+    "checklist": [
+      "Collect failing webhook IDs, timestamps, regions, and response codes.",
+      "Compare failure pattern against recent deploys and integration changes.",
+      "Create engineering escalation with reproduction details and customer impact.",
+      "Confirm retry backlog and any safe replay or mitigation option.",
+      "Send customer update with investigation status and next evidence request."
+    ],
+    "owner_roles": ["Integration Engineer", "Support Engineer", "Customer Success Manager"],
+    "escalation_policy": "Escalate to integrations engineering when 5xx, replay failures, or enterprise production impact is present.",
+    "customer_update_template": "We are investigating the webhook regression on {ticket_id}. Please keep any failing delivery IDs available while engineering checks recent deploy and retry behavior."
+  },
+  {
+    "id": "pb_billing_dispute",
+    "title": "Billing Dispute Review",
+    "category": "billing",
+    "tags": ["billing", "invoice", "refund", "charge", "dispute", "seat"],
+    "severity": "medium",
+    "checklist": [
+      "Capture invoice number, disputed line items, and contract terms.",
+      "Compare billing-system seat counts against entitlement history.",
+      "Route exception request to finance owner when credit or refund is likely.",
+      "Prepare customer-facing explanation with correction timeline.",
+      "Record resolution decision and update account notes."
+    ],
+    "owner_roles": ["Billing Specialist", "Finance Owner", "Customer Success Manager"],
+    "escalation_policy": "Route to finance for disputes involving duplicate charges, refunds, or contract interpretation.",
+    "customer_update_template": "We are reviewing the billing details for {ticket_id}, including the disputed invoice lines and entitlement history. We will follow up with findings and any correction path."
+  },
+  {
+    "id": "pb_privacy_export",
+    "title": "Privacy Export Handling",
+    "category": "security_privacy",
+    "tags": ["privacy", "export", "data", "compliance", "deletion", "gdpr"],
+    "severity": "high",
+    "checklist": [
+      "Verify requester identity and authorization for the account.",
+      "Confirm export scope, retention expectations, and deletion state.",
+      "Engage privacy/compliance owner before sharing regulated data guidance.",
+      "Document legal basis, systems checked, and customer-facing answer.",
+      "Send reviewed response with limitations and next compliance contact."
+    ],
+    "owner_roles": ["Privacy Owner", "Support Lead", "Compliance Reviewer"],
+    "escalation_policy": "Require privacy owner review before committing export scope, deleted-record handling, or regulated-data timelines.",
+    "customer_update_template": "We are reviewing the privacy export request for {ticket_id} with our compliance owner to confirm scope and retention handling before we provide final guidance."
+  },
+  {
+    "id": "pb_api_key_rotation",
+    "title": "API Key Rotation Guidance",
+    "category": "security_privacy",
+    "tags": ["api", "api key", "rotation", "secret", "security", "zero downtime"],
+    "severity": "medium",
+    "checklist": [
+      "Identify active keys, integrations, owners, and rotation deadline.",
+      "Create secondary key and deploy it to production consumers first.",
+      "Verify traffic on the new key and monitor authentication errors.",
+      "Revoke the old key after successful cutover and document rollback state.",
+      "Send final guidance with rotation evidence and recommended cadence."
+    ],
+    "owner_roles": ["Security Engineer", "Platform Engineer", "Support Engineer"],
+    "escalation_policy": "Escalate to security for suspected key exposure; otherwise route as guided support with platform owner validation.",
+    "customer_update_template": "For {ticket_id}, we recommend a staged API key rotation: add the new key, validate production traffic, then revoke the old key after monitoring confirms cutover."
+  }
+]
